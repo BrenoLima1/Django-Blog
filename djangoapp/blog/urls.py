@@ -8,6 +8,6 @@ app_name = 'blog'
 
 urlpatterns = [
     path('', index, name='index'),
-    path('post/', post, name='post'),
+    path('post/<slug:slug>/', post, name='post'),
     path('page/', page, name='page'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
