@@ -1,5 +1,5 @@
 from django.urls import path
-from blog.views import created_by, index, post, page, category
+from blog.views import created_by, index, post, page, category, tag, search
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -12,4 +12,6 @@ urlpatterns = [
     path('page/<slug:slug>/', page, name='page'),
     path('created_by/<int:author_pk>/', created_by, name='created_by'),
     path('category/<slug:slug>/', category, name='category'),
+    path('tag/<slug:slug>/', tag, name='tag'),
+    path('search/', search, name='search'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -7,5 +7,5 @@ def random_letters(k=5):
         string.ascii_letters + string.digits, k=k
     ))
 
-def slugfy_new(text):
+def slugify_new(text):
     return slugify(text) + '-' + random_letters(4)

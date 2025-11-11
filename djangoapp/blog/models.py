@@ -1,12 +1,27 @@
-# blog/models.py
-
 from django.contrib.auth.models import User
 from django.db import models
-from django_summernote.models import AbstractAttachment
-from utils.rands import slugfy_new
-from utils.images import resize_image
 from django.urls import reverse
+from django_summernote.models import AbstractAttachment
+from utils.images import resize_image
+from utils.rands import slugify_new
 
+
+class PostAttachment(AbstractAttachment):
+    def save(self, *args, **kwargs):
+        if not self.name:
+            self.name = self.file.name
+
+        current_file_name = str(self.file.name)
+        super_save = super().save(*args, **kwargs)
+        file_changed = False
+
+        if self.file:
+            file_changed = current_file_name != self.file.name
+
+        if file_changed:
+            resize_image(self.file, 900, True, 70)
+
+        return super_save
 
 
 class Tag(models.Model):
@@ -22,7 +37,7 @@ class Tag(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugfy_new(self.name, 4)
+            self.slug = slugify_new(self.name, 4)
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
@@ -42,7 +57,7 @@ class Category(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugfy_new(self.name, 4)
+            self.slug = slugify_new(self.name, 4)
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
@@ -64,9 +79,14 @@ class Page(models.Model):
     )
     content = models.TextField()
 
+    def get_absolute_url(self):
+        if not self.is_published:
+            return reverse('blog:index')
+        return reverse('blog:page', args=(self.slug,))
+
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugfy_new(self.title, 4)
+            self.slug = slugify_new(self.title, 4)
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
@@ -75,7 +95,9 @@ class Page(models.Model):
 
 class PostManager(models.Manager):
     def get_published(self):
-        return self.filter(is_published=True).order_by('-pk')
+        return self\
+            .filter(is_published=True)\
+            .order_by('-pk')
 
 
 class Post(models.Model):
@@ -132,37 +154,20 @@ class Post(models.Model):
     def get_absolute_url(self):
         if not self.is_published:
             return reverse('blog:index')
-        return reverse('blog:post', args=[self.slug])
+        return reverse('blog:post', args=(self.slug,))
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugfy_new(self.title, 4)
+            self.slug = slugify_new(self.title, 4)
 
         current_cover_name = str(self.cover.name)
         super_save = super().save(*args, **kwargs)
         cover_changed = False
 
         if self.cover:
-            cover_changed = current_cover_name != str(self.cover.name)
+            cover_changed = current_cover_name != self.cover.name
 
         if cover_changed:
-            resize_image(self.cover, 900)
-
-        return super_save
-
-class PostAttachment(AbstractAttachment):
-    def save(self, *args, **kwargs):
-        if not self.name:
-            self.name = self.file.name
-
-        current_file_name = str(self.file.name)
-        super_save = super().save(*args, **kwargs)
-        file_changed = False
-
-        if self.file:
-            file_changed = current_file_name != self.file.name
-
-        if file_changed:
-            resize_image(self.file, 900, True, 70)
+            resize_image(self.cover, 900, True, 70)
 
         return super_save
